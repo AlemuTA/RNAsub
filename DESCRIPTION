@@ -1,0 +1,17 @@
+Package: RNAsub
+Title: Sub-sampling of RNA-seq data 
+Version: 1.0.0
+Authors@R: 
+    c(person(given = "Alemu Takele",
+           family = "Assefa",
+           role = c("aut", "cre"),
+           email = "alemutak@hotmail.com"))
+Description: A simplified method to subsample a given RNA-seq data to a 
+             desired level of either library size per sample or total count. 
+             This method is adopted from the subSeq bioconductor package.
+License: GPL-2
+Encoding: UTF-8
+LazyData: true 
+Imports: stats 
+Depends: R (>= 3.3.0)
+RoxygenNote: 6.1.1
