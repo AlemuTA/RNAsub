@@ -17,6 +17,9 @@
 #' are not specified). It is a single numeric value.
 #' @param seed an integer number to control the random subsampling procedure especially
 #' when one wants to reproduce results. See \code{set.seed()}.
+#' @param BPPARAM An optional BiocParallelParam instance determining the parallel back-end to be 
+#' used during evaluation, or a list of BiocParallelParam instances, to be applied in 
+#' sequence for nested calls to BiocParallel functions.
 #' @param ... additional arguments to pass to internal functions, such as \code{rbinom}
 #'
 #' @return a matrix of counts with dimension equal to the original data
@@ -74,48 +77,33 @@
 #' }
 #'
 #' @importFrom stats rbinom
+#' @importFrom BiocParallel bplapply
 RNAsub <- function(counts, prop=NULL, target.LS=NULL, target.total.count=NULL,
-                   seed=64312, ... ){
-
-  if(is.null(prop) & is.null(target.LS) & is.null(target.total.count)){
-    stop("Specify either prop or target.LS.")
-  }else if(!is.null(prop) & is.null(target.LS) & is.null(target.total.count)){
-    binom.prob <- prop
-  }else if(is.null(prop) & !is.null(target.LS) & is.null(target.total.count)){
-    binom.prob <- target.LS/colSums(counts)
-  }else if(is.null(prop) & is.null(target.LS) & !is.null(target.total.count)){
-    binom.prob <- target.total.count/sum(counts)
-  }else if(!is.null(prop) & !is.null(target.LS)){
-    stop("Both prop and target.LS can be used. Specify only one of them.")
-  }
-
-  if(any(is.na(binom.prob))){
-    stop("Binomial probability  contains missing value.")
-  }
-  if(any(binom.prob>1) | any(binom.prob<0)){
-    warning("Binomial probability is out of the range [0, 1]. Probabilities less than 0
-            are scaled to 0, and probabilities more than 1 are scaled to 1.")
-  }
-
-  sub.sample <- sapply(1:ncol(counts),  function(cc){
-    if(length(binom.prob)==1){
-      sapply(1:nrow(counts), function(rr){
-        set.seed(seed+cc+rr+cc*rr)
-        rbinom(1, counts[rr, cc], binom.prob)
-      })
-    }else if(length(binom.prob)==ncol(counts)){
-      sapply(1:nrow(counts), function(rr){
-        set.seed(seed+cc+rr+cc*rr)
-        rbinom(1, counts[rr, cc], binom.prob[cc])
-      })
-    }
-    else{
-      stop("ERROR: Possible cause of error: wrong input.")
-    }
-  })
-
+                   seed=64312, BPPARAM=BiocParallel::SerialParam(), ... ){
+  
+  checkInputs <- checkInputs(counts, prop, target.LS, target.total.count)
+  
+  binom.prob <- calcBinomProb(counts, prop, target.LS, target.total.count)
+  
+  
+  sub.sample <- BiocParallel::bplapply(seq_len(ncol(counts)),  FUN=function(cc){
+    subsample(counts.cc = counts[,cc], cc = cc, n.samples = ncol(counts), 
+              binom.prob = binom.prob, seed=seed, ...)
+  }, BPPARAM=BPPARAM)
+  sub.sample <- do.call("cbind", sub.sample)
+  
   colnames(sub.sample) <- colnames(counts)
   rownames(sub.sample) <- rownames(counts)
   sub.sample
-
+  
 }
+# 
+#Examples
+# counts <- creat.exampl.RNAseq.data()
+# subsamples = RNAsub(counts = counts, target.LS = 2e6, seed=2)
+# str(subsamples)
+# head(counts[, 1:5])
+# head(subsamples[, 1:5])
+# 
+# plot(colSums(counts), colSums(subsamples))
+# abline(h=2e6)

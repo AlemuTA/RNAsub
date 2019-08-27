@@ -2,6 +2,7 @@
 
 export(RNAsub)
 export(creat.exampl.RNAseq.data)
+importFrom(BiocParallel,bplapply)
 importFrom(stats,rbinom)
 importFrom(stats,rlnorm)
 importFrom(stats,rnbinom)

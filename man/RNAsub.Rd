@@ -5,7 +5,8 @@
 \title{RNA-seq subsampling}
 \usage{
 RNAsub(counts, prop = NULL, target.LS = NULL,
-  target.total.count = NULL, seed = 64312, ...)
+  target.total.count = NULL, seed = 64312,
+  BPPARAM = BiocParallel::SerialParam(), ...)
 }
 \arguments{
 \item{counts}{orginal (unormalized) RNA-seq count matrix (genes in row and samples in column)}
@@ -24,6 +25,10 @@ are not specified). It is a single numeric value.}
 
 \item{seed}{an integer number to control the random subsampling procedure especially
 when one wants to reproduce results. See \code{set.seed()}.}
+
+\item{BPPARAM}{An optional BiocParallelParam instance determining the parallel back-end to be 
+used during evaluation, or a list of BiocParallelParam instances, to be applied in 
+sequence for nested calls to BiocParallel functions.}
 
 \item{...}{additional arguments to pass to internal functions, such as \code{rbinom}}
 }
